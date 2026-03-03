@@ -1,8 +1,15 @@
 <!DOCTYPE html>
 <html lang="th">
-<head><title>HotelEase</title><link rel="stylesheet" href="/style.css"><script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script></head>
+<head>
+    <title>HotelEase</title>
+    <link rel="stylesheet" href="/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
 <body>
-    <nav><h2>HotelEase</h2><div id="auth"></div></nav>
+    <nav>
+        <h2>HotelEase</h2>
+        <div id="auth"></div>
+    </nav>
     <div class="container">
         <div class="search-bar">
             <input type="text" id="loc" placeholder="ไปที่ไหน? (เช่น Bangkok)">
@@ -15,7 +22,13 @@
 
     <script>
         const u = localStorage.getItem('username');
-        document.getElementById('auth').innerHTML = u ? `สวัสดี ${u} | <button onclick="localStorage.clear();location.reload()" class="btn" style="background:red;padding:5px;">Logout</button>` : `<a href="/login">เข้าสู่ระบบ</a> <a href="/register">สมัครสมาชิก</a>`;
+        
+        // ส่วนที่เพิ่มปุ่ม "การจองของฉัน" (ลิงก์ไป /my-bookings)
+        document.getElementById('auth').innerHTML = u 
+            ? `สวัสดี ${u} | 
+               <a href="/my-bookings" class="btn" style="text-decoration:none; margin-right:5px; padding:6px 12px; background:var(--primary); color:white; border-radius:3px;">รายการจองทั้งหมด</a>
+               <button onclick="localStorage.clear();location.reload()" class="btn" style="background:red; padding:6px 12px; border:none; color:white; border-radius:3px; cursor:pointer;">Logout</button>` 
+            : `<a href="/login">เข้าสู่ระบบ</a> <a href="/register">สมัครสมาชิก</a>`;
 
         document.getElementById('in').addEventListener('change', function() {
             document.getElementById('out').min = this.value;
@@ -29,34 +42,40 @@
 
             const params = { location: document.getElementById('loc').value, max_price: document.getElementById('price').value, check_in: i, check_out: o };
             
-            const res = await axios.get('http://localhost:3000/api/hotels', { params });
-            const list = document.getElementById('list');
-            if(!res.data.length) return list.innerHTML = '<h3>ไม่พบโรงแรมที่ว่างตามเงื่อนไข</h3>';
+            try {
+                const res = await axios.get('http://localhost:3000/api/hotels', { params });
+                const list = document.getElementById('list');
+                if(!res.data.length) return list.innerHTML = '<h3>ไม่พบโรงแรมที่ว่างตามเงื่อนไข</h3>';
 
-            list.innerHTML = res.data.map(h => {
-                const minPrice = h.Rooms.length > 0 ? Math.min(...h.Rooms.map(r => r.price_per_night)) : 0;
-                return `
-                <div class="hotel-card">
-                    <img src="${h.image_url}" class="hotel-img" alt="hotel">
-                    <div class="hotel-info">
-                        <div>
-                            <h2 style="margin:0; color:var(--primary)">${h.hotel_name}</h2>
-                            <p style="color:#666;">📍 ที่ตั้ง: ${h.location}</p>
-                            <span class="rating">${h.rating} ⭐</span>
+                list.innerHTML = res.data.map(h => {
+                    const minPrice = h.Rooms && h.Rooms.length > 0 ? Math.min(...h.Rooms.map(r => r.price_per_night)) : 0;
+                    return `
+                    <div class="hotel-card">
+                        <img src="${h.image_url}" class="hotel-img" alt="hotel">
+                        <div class="hotel-info">
+                            <div>
+                                <h2 style="margin:0; color:var(--primary)">${h.hotel_name}</h2>
+                                <p style="color:#666;">📍 ที่ตั้ง: ${h.location}</p>
+                                <span class="rating">${h.rating} ⭐</span>
+                            </div>
+                            <div style="text-align: right; display:flex; flex-direction:column; justify-content:space-between;">
+                                <div><span style="font-size:12px">ราคาเริ่มต้น</span><div class="price">${minPrice.toLocaleString()} ฿</div></div>
+                                <button class="btn" onclick="goHotel(${h.hotel_id})">ดูรายละเอียด</button>
+                            </div>
                         </div>
-                        <div style="text-align: right; display:flex; flex-direction:column; justify-content:space-between;">
-                            <div><span style="font-size:12px">ราคาเริ่มต้น</span><div class="price">${minPrice.toLocaleString()} ฿</div></div>
-                            <button class="btn" onclick="goHotel(${h.hotel_id})">ดูรายละเอียด</button>
-                        </div>
-                    </div>
-                </div>`;
-            }).join('');
+                    </div>`;
+                }).join('');
+            } catch (error) {
+                console.error("Search Error:", error);
+                alert("เกิดข้อผิดพลาดในการค้นหาโรงแรมครับ");
+            }
         }
 
         function goHotel(id) {
             const i = document.getElementById('in').value, o = document.getElementById('out').value;
             window.location.href = `/hotel?id=${id}&in=${i}&out=${o}`;
         }
+        
         search();
     </script>
 </body>
