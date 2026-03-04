@@ -1,12 +1,8 @@
 <%- include('partials/header') %>
 
 <div class="container" style="max-width: 1000px; margin: 20px auto; padding: 0 20px;">
-    <a href="/" style="display: inline-block; margin-bottom: 20px; color: #0071c2; text-decoration: none; font-weight: bold; background: white; padding: 8px 15px; border-radius: 4px; border: 1px solid #ddd; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-        ⬅️ ย้อนกลับไปหน้าค้นหา
-    </a>
-    
     <div id="content">
-        <p style="text-align: center; margin-top: 50px; font-size: 18px; color: #666;">กำลังโหลดข้อมูล...</p>
+        <p style="text-align: center; margin-top: 50px; font-size: 18px; color: #666;">กำลังโหลดข้อมูลโรงแรม...</p>
     </div>
 </div>
 
@@ -15,109 +11,111 @@
     const hotelId = q.get('id');
     let checkIn = q.get('in') || '';
     let checkOut = q.get('out') || '';
-    let allRooms = []; // ใช้เก็บห้องทั้งหมดเพื่อเอามากรอง
+    let allRooms = []; 
 
     async function loadHotel() {
-        const res = await axios.get(`http://localhost:3000/api/hotels/${hotelId}?check_in=${checkIn}&check_out=${checkOut}`);
-        const h = res.data;
-        allRooms = h.Rooms; // เก็บข้อมูลห้องทั้งหมดไว้
-        
-        document.getElementById('content').innerHTML = `
-            <img src="${h.image_url}" style="width:100%; height:400px; object-fit:cover; border-radius:12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
-            <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-top:20px;">
-                <div>
-                    <h1 style="margin-bottom:5px; color: #003580;">${h.hotel_name}</h1>
-                    <p style="margin:0; color:#666;">📍 ${h.location} | <span style="background:#febb02; color:#333; padding:4px 8px; border-radius:4px; font-size:14px; font-weight:bold;">${h.rating} ⭐</span></p>
-                </div>
-            </div>
-            <p style="line-height:1.6; margin-top:20px; font-size:16px;">${h.description}</p>
-            <hr style="border:0; border-top:1px solid #ddd; margin:30px 0;">
+        try {
+            // 🌟 ส่งวันที่ไปให้ Backend กรองห้องที่ซ้อนทับกันออกทันที
+            const res = await axios.get(`http://localhost:3000/api/hotels/${hotelId}?check_in=${checkIn}&check_out=${checkOut}`);
+            const h = res.data;
+            allRooms = h.Rooms; 
             
-            <h2 style="color: #003580;">ตรวจสอบห้องว่างและทำการจอง</h2>
-            <div style="background: white; padding: 20px; border-radius: 8px; display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: 1px solid #eee;">
-                <div style="flex:1;">
-                    <label style="font-weight:bold; color: #333;">วันเข้าพัก</label>
-                    <input type="date" id="new-in" value="${checkIn}" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:4px; margin-top:5px; box-sizing: border-box;">
+            document.getElementById('content').innerHTML = `
+                <img src="${h.image_url}" style="width:100%; height:400px; object-fit:cover; border-radius:12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+                <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-top:20px;">
+                    <div>
+                        <h1 style="margin-bottom:5px; color: var(--primary);">${h.hotel_name}</h1>
+                        <p style="margin:0; color:#666;">📍 ${h.location} | <span class="rating">${h.rating} ⭐</span></p>
+                    </div>
                 </div>
-                <div style="flex:1;">
-                    <label style="font-weight:bold; color: #333;">วันออก</label>
-                    <input type="date" id="new-out" value="${checkOut}" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:4px; margin-top:5px; box-sizing: border-box;">
-                </div>
+                <p style="line-height:1.6; margin-top:20px; font-size:16px;">${h.description}</p>
+                <hr style="border:0; border-top:1px solid #ddd; margin:30px 0;">
                 
-                <div style="flex:1;">
-                    <label style="font-weight:bold; color: #333;">ประเภทห้องพัก</label>
-                    <select id="filter-type" onchange="renderRooms()" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:4px; margin-top:5px; box-sizing: border-box;">
-                        <option value="">ทุกประเภทห้อง</option>
-                        <option value="Standard">Standard</option>
-                        <option value="Deluxe">Deluxe</option>
-                        <option value="Suite">Suite</option>
-                    </select>
+                <h2 style="color: var(--primary);">เลือกห้องพักที่ว่าง</h2>
+                <div style="background: white; padding: 20px; border-radius: 8px; display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: 1px solid #eee;">
+                    <div style="flex:1; min-width:200px;">
+                        <label style="font-weight:bold; color: #333;">📅 วันเข้าพัก</label>
+                        <input type="date" id="new-in" value="${checkIn}" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:4px; margin-top:5px;">
+                    </div>
+                    <div style="flex:1; min-width:200px;">
+                        <label style="font-weight:bold; color: #333;">📅 วันออก</label>
+                        <input type="date" id="new-out" value="${checkOut}" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:4px; margin-top:5px;">
+                    </div>
+                    <div style="flex:1; min-width:200px;">
+                        <label style="font-weight:bold; color: #333;">🛏️ ประเภทห้องพัก</label>
+                        <select id="filter-type" onchange="renderRooms()" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:4px; margin-top:5px;">
+                            <option value="">ทุกประเภทห้อง</option>
+                            <option value="Standard">Standard</option>
+                            <option value="Deluxe">Deluxe</option>
+                            <option value="Suite">Suite</option>
+                        </select>
+                    </div>
                 </div>
 
-                <div style="display:flex; align-items:flex-end;">
-                    <button class="btn" style="background: #0071c2; color: white; padding: 10px 20px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;" onclick="updateDates()">เช็คห้องว่าง</button>
-                </div>
-            </div>
+                <div id="rooms-container"></div>
+            `;
 
-            <div id="rooms-container"></div>
-        `;
+            // 🌟 ระบบตรวจจับอัตโนมัติ: เมื่อเปลี่ยนวันที่ให้ทำงานทันที
+            const inInput = document.getElementById('new-in');
+            const outInput = document.getElementById('new-out');
 
-        // ดักวันที่ให้เช็คเอาท์ต้องมากกว่าเช็คอินเสมอ
-        document.getElementById('new-in').addEventListener('change', function() {
-            document.getElementById('new-out').min = this.value;
-            if(document.getElementById('new-out').value < this.value) document.getElementById('new-out').value = this.value;
-        });
+            const autoUpdate = () => {
+                const valIn = inInput.value;
+                const valOut = outInput.value;
+                
+                // ตั้งค่าวันที่ออกขั้นต่ำให้น้อยกว่าวันเข้าไม่ได้
+                outInput.min = valIn;
 
-        renderRooms(); // วาดข้อมูลห้องพักลงจอ
+                if (valIn && valOut) {
+                    if (valOut <= valIn) {
+                        showFlash('วันเช็คเอาท์ต้องอยู่หลังวันเช็คอินครับ', 'error');
+                        return;
+                    }
+                    checkIn = valIn;
+                    checkOut = valOut;
+                    loadHotel(); // โหลดข้อมูลใหม่จาก Backend ทันที
+                }
+            };
+
+            inInput.addEventListener('change', autoUpdate);
+            outInput.addEventListener('change', autoUpdate);
+
+            renderRooms(); 
+        } catch (e) {
+            console.error(e);
+            showFlash('ไม่สามารถโหลดข้อมูลโรงแรมได้', 'error');
+        }
     }
 
-    // ฟังก์ชันวาดการ์ดห้องพัก (รวมระบบกรองแล้ว)
     function renderRooms() {
-        const selectedType = document.getElementById('filter-type').value;
-        
-        // กรองห้องตามประเภทที่เลือก
+        const selectedType = document.getElementById('filter-type')?.value || '';
         const filteredRooms = allRooms.filter(r => selectedType === '' || r.room_type === selectedType);
 
         let roomsHtml = filteredRooms.length ? filteredRooms.map(r => `
             <div class="room-card" style="background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); padding: 20px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border: 1px solid #eee;">
                 <div>
-                    <h3 style="margin:0; color:#0071c2;">ห้อง ${r.room_name} <span style="font-size: 16px; color: #555;">(${r.room_type})</span></h3>
+                    <h3 style="margin:0; color:var(--primary);">ห้อง ${r.room_name} <span style="font-size: 16px; color: #555;">(${r.room_type})</span></h3>
                     <p style="color:#666; margin:5px 0;">พักได้สูงสุด: ${r.max_occupancy} ท่าน</p>
                 </div>
                 <div style="text-align:right;">
-                    <div class="price" style="color:#28a745; font-size: 24px; font-weight: bold;">${r.price_per_night.toLocaleString()} ฿</div>
+                    <div class="price" style="font-size: 24px;">${r.price_per_night.toLocaleString()} ฿</div>
                     <span style="font-size:12px; color:#666; display:block; margin-bottom:10px;">ราคาต่อคืน</span>
-                    <button class="btn btn-success" style="background: #28a745; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold;" onclick="bookRoom(${r.room_id}, ${r.price_per_night})">จองห้องนี้</button>
+                    <button class="btn" style="background: #28a745;" onclick="bookRoom(${r.room_id}, ${r.price_per_night})">จองห้องนี้</button>
                 </div>
             </div>
-        `).join('') : '<h4 style="color:#dc3545; text-align:center; padding:20px; background:white; border-radius:8px; border: 1px solid #eee;">ไม่มีห้องพักประเภทนี้ว่างในช่วงวันที่คุณเลือก</h4>';
+        `).join('') : '<h4 style="color:#dc3545; text-align:center; padding:30px; background:white; border-radius:8px; border: 1px solid #eee; width:100%;">ไม่มีห้องพักว่างในช่วงวันที่คุณเลือก</h4>';
 
         document.getElementById('rooms-container').innerHTML = roomsHtml;
     }
 
-    // เช็คห้องว่าง (ดึงข้อมูลใหม่จากฐานข้อมูล)
-    function updateDates() {
-        checkIn = document.getElementById('new-in').value;
-        checkOut = document.getElementById('new-out').value;
-        if((checkIn && !checkOut) || (!checkIn && checkOut)) return alert('กรุณาเลือกวันที่ให้ครบครับ');
-        if(checkIn && checkOut && checkIn >= checkOut) return alert('วันเช็คเอาท์ต้องอยู่หลังวันเช็คอินครับ');
-        loadHotel(); // โหลดข้อมูลใหม่ทั้งหมด
-    }
-
-    // กดปุ่มจอง
     function bookRoom(roomId, price) {
-        const currentIn = document.getElementById('new-in').value;
-        const currentOut = document.getElementById('new-out').value;
-
-        if(!currentIn || !currentOut) {
-            alert('กรุณาเลือกวันเข้าพักและวันออกในช่องด้านบนให้ครบก่อนกดจองครับ');
-            document.getElementById('new-in').focus(); // โฟกัสให้ลูกค้าไปกรอก
+        if(!checkIn || !checkOut) {
+            showFlash('กรุณาเลือกวันเข้าพักและวันออกให้ครบก่อนครับ', 'error');
+            document.getElementById('new-in').focus();
             return;
         }
-        if(currentIn >= currentOut) return alert('วันเช็คเอาท์ต้องอยู่หลังวันเช็คอินครับ');
-        
-        // ส่งไปหน้าชำระเงิน
-        window.location.href = `/booking?id=${roomId}&price=${price}&in=${currentIn}&out=${currentOut}`;
+        // ส่งไปหน้าสรุปการจอง
+        window.location.href = `/booking?id=${roomId}&price=${price}&in=${checkIn}&out=${checkOut}`;
     }
     
     loadHotel();
