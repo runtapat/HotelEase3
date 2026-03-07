@@ -92,6 +92,7 @@
             <h4 id="h-title" style="margin-top:0; color:var(--primary);">➕ เพิ่ม/แก้ไข โรงแรม</h4>
             <input type="hidden" id="edit-h-id">
             <div class="form-row"><input type="text" id="h-name" placeholder="ชื่อโรงแรม"><input type="text" id="h-loc" placeholder="ที่ตั้ง"></div>
+            <div class="form-row"><input type="text" id="h-address" placeholder="ที่อยู่ละเอียด"><input type="text" id="h-contact" placeholder="เบอร์โทรศัพท์ติดต่อ"></div>
             <div class="form-row">
                 <input type="number" step="0.1" id="h-rating" placeholder="เรตติ้ง (0-10)" oninput="if(this.value > 10) this.value = 10; if(this.value < 0) this.value = 0;">
                 <input type="text" id="h-img" placeholder="URL รูปภาพ">
@@ -126,7 +127,6 @@
 </div>
 
 <script>
-    // 🌟 ดึงค่า API_PORT มาจาก Server (ที่ส่งผ่าน res.render หรือ app.locals)
     const API_PORT = "<%= apiPort %>"; 
     const API_BASE_URL = `http://localhost:${API_PORT}/api/admin`;
 
@@ -145,7 +145,6 @@
     async function loadData() {
         try {
             const t = new Date().getTime();
-            // 🌟 เปลี่ยน URL เป็นตัวแปร API_BASE_URL
             const resB = await axios.get(`${API_BASE_URL}/bookings?_t=${t}`, authHeader);
             bookingData = resB.data;
             renderBookings();
@@ -155,7 +154,6 @@
             const resH = await axios.get(`${API_BASE_URL}/all-data?_t=${t}`, authHeader);
             allData = resH.data;
             
-            // วาดตารางโรงแรม
             document.getElementById('tb-hotels').innerHTML = allData.map(h => `<tr><td>#${h.hotel_id}</td><td style="text-align:left;"><b>${h.hotel_name}</b></td><td>${h.location}</td><td><b style="color:#febb02;">${h.rating}</b> ⭐</td><td><button class="btn-save" style="background:#febb02; color:black; margin-right:5px; padding:6px 12px;" onclick="editHotel(${h.hotel_id})">แก้ไข</button><button class="btn-save" style="background:#dc3545; padding:6px 12px;" onclick="delHotel(${h.hotel_id})">ลบ</button></td></tr>`).join('');
             
             const opt = allData.map(h => `<option value="${h.hotel_id}">${h.hotel_name}</option>`).join('');
@@ -166,7 +164,6 @@
         } catch (e) { console.error(e); }
     }
 
-    // 🌟 1. Dashboard Income
     function renderDashboardAndIncome() {
         const month = document.getElementById('filter-month-db').value;
         const summary = {}; let grandTotal = 0;
@@ -184,7 +181,6 @@
         document.getElementById('dashboard-summary').innerHTML = html + `</tbody></table>`;
     }
 
-    // 🌟 2. รายงานผู้ใช้
     function renderUserDetailedReport() {
         const month = document.getElementById('filter-month-users').value;
         const userMap = {}; let totalSum = 0;
@@ -200,7 +196,6 @@
         }).join('');
     }
 
-    // 🌟 3. ตารางรายการจอง
     function renderBookings() { document.getElementById('tb-bookings').innerHTML = bookingData.map(b => { const badge = b.status === 'Pending' ? 'bg-pending' : (b.status === 'Confirmed' ? 'bg-confirmed' : 'bg-cancelled'); return `<tr><td>${b.User.user_id}</td><td style="text-align:left;">${b.User.username}</td><td style="text-align:left;"><b>${b.Room.Hotel.hotel_name}</b><br><small>${b.Room.room_name}</small></td><td>${b.check_in_date}</td><td style="font-weight:bold;">${b.total_amount.toLocaleString()}</td><td><span class="badge ${badge}">${b.status}</span></td><td><div style="display:flex; gap:5px; justify-content:center;"><select id="s-${b.booking_id}" style="padding:5px;" ${b.status==='Cancelled'?'disabled':''}><option value="Pending" ${b.status==='Pending'?'selected':''}>Pending</option><option value="Confirmed" ${b.status==='Confirmed'?'selected':''}>Confirmed</option><option value="Cancelled" ${b.status==='Cancelled'?'selected':''}>Cancelled</option></select><button class="btn-save" onclick="updStat(${b.booking_id})" ${b.status==='Cancelled'?'disabled':''}>บันทึก</button></div></td></tr>`; }).join(''); }
     
     async function updStat(id) { 
@@ -211,7 +206,6 @@
         } catch (e) { showFlash('ล้มเหลว', 'error'); } 
     }
 
-    // 🌟 4. ตารางจัดการห้องพัก
     function renderRooms() {
         const filterId = document.getElementById('filter-hotel').value;
         let html = '';
@@ -235,13 +229,42 @@
         document.getElementById('tb-rooms').innerHTML = html;
     }
 
-    // ฟังก์ชัน CRUD Hotels/Rooms
-    function editHotel(id) { const h = allData.find(x => x.hotel_id === id); document.getElementById('edit-h-id').value = id; document.getElementById('h-name').value = h.hotel_name; document.getElementById('h-loc').value = h.location; document.getElementById('h-rating').value = h.rating; document.getElementById('h-desc').value = h.description; document.getElementById('h-img').value = h.image_url; document.getElementById('h-title').innerText = '✏️ แก้ไขโรงแรม'; document.getElementById('btn-cancel-h').style.display = 'inline-block'; }
-    function resetHotelForm() { document.getElementById('edit-h-id').value = ''; document.getElementById('h-title').innerText = '➕ เพิ่มโรงแรมใหม่'; document.getElementById('btn-cancel-h').style.display = 'none'; }
+    function editHotel(id) { 
+        const h = allData.find(x => x.hotel_id === id); 
+        document.getElementById('edit-h-id').value = id; 
+        document.getElementById('h-name').value = h.hotel_name; 
+        document.getElementById('h-loc').value = h.location; 
+        // 🌟 ดึงค่าใหม่มาแสดง
+        document.getElementById('h-address').value = h.address || '';
+        document.getElementById('h-contact').value = h.contact_number || '';
+        document.getElementById('h-rating').value = h.rating; 
+        document.getElementById('h-desc').value = h.description; 
+        document.getElementById('h-img').value = h.image_url; 
+        document.getElementById('h-title').innerText = '✏️ แก้ไขโรงแรม'; 
+        document.getElementById('btn-cancel-h').style.display = 'inline-block'; 
+    }
+
+    function resetHotelForm() { 
+        document.getElementById('edit-h-id').value = ''; 
+        // 🌟 ล้างค่าใหม่ด้วย
+        document.getElementById('h-address').value = '';
+        document.getElementById('h-contact').value = '';
+        document.getElementById('h-title').innerText = '➕ เพิ่มโรงแรมใหม่'; 
+        document.getElementById('btn-cancel-h').style.display = 'none'; 
+    }
     
     async function saveHotel() { 
         const id = document.getElementById('edit-h-id').value; 
-        const d = { hotel_name: document.getElementById('h-name').value, location: document.getElementById('h-loc').value, rating: document.getElementById('h-rating').value, description: document.getElementById('h-desc').value, image_url: document.getElementById('h-img').value }; 
+        const d = { 
+            hotel_name: document.getElementById('h-name').value, 
+            location: document.getElementById('h-loc').value, 
+            // 🌟 ส่งค่าใหม่ไป Backend
+            address: document.getElementById('h-address').value,
+            contact_number: document.getElementById('h-contact').value,
+            rating: document.getElementById('h-rating').value, 
+            description: document.getElementById('h-desc').value, 
+            image_url: document.getElementById('h-img').value 
+        }; 
         try { 
             if(id) await axios.put(`${API_BASE_URL}/hotels/${id}`, d, authHeader); 
             else await axios.post(`${API_BASE_URL}/hotels`, d, authHeader); 

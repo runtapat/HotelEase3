@@ -12,7 +12,6 @@
 </div>
 
 <script>
-    // 🌟 ดึงค่า PORT จาก Server ผ่าน EJS Variable
     const API_PORT = "<%= apiPort %>"; 
     const API_URL = `http://localhost:${API_PORT}/api/hotels`;
 
@@ -29,7 +28,6 @@
         const params = { location: document.getElementById('loc').value, max_price: document.getElementById('price').value, check_in: i, check_out: o };
         
         try {
-            // 🌟 เปลี่ยน URL มาใช้ตัวแปรที่ดึงค่าจาก .env
             const res = await axios.get(API_URL, { params });
             const list = document.getElementById('list');
             if(!res.data.length) return list.innerHTML = '<h3 style="text-align:center; margin-top:40px;">ไม่พบโรงแรมที่ว่างตามเงื่อนไข</h3>';
@@ -43,6 +41,8 @@
                         <div>
                             <h2 style="margin:0; color:#0071c2">${h.hotel_name}</h2>
                             <p style="color:#666; margin:5px 0;">📍 ที่ตั้ง: ${h.location}</p>
+                            <p style="color:#666; font-size:14px; margin:5px 0;">🏠 ที่อยู่: ${h.address || '-'}</p>
+                            <p style="color:#666; font-size:14px; margin:5px 0;">📞 ติดต่อ: ${h.contact_number || '-'}</p>
                             <span class="rating" style="background:#febb02; padding:3px 6px; border-radius:4px; font-weight:bold; font-size:14px;">${h.rating} ⭐</span>
                         </div>
                         <div style="text-align: right; display:flex; flex-direction:column; justify-content:space-between;">
